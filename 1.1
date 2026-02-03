@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>呼吸天气 - 我与你同在</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px 20px 60px;
+            transition: background 2.5s ease;
+        }
+
+        /* 天气背景渐变 */
+        .weather-bg-clear { background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%); }
+        .weather-bg-lightCloud { background: linear-gradient(180deg, #B0C4DE 0%, #F0F8FF 100%); }
+        .weather-bg-overcast { background: linear-gradient(180deg, #708090 0%, #2F4F4F 100%); }
+        .weather-bg-fog { background: linear-gradient(180deg, #D3D3D3 0%, #A9A9A9 100%); }
+        .weather-bg-rain { background: linear-gradient(180deg, #4682B4 0%, #2C3E50 100%); }
+        .weather-bg-heavyRain { background: linear-gradient(180deg, #1C1C1C 0%, #000080 100%); }
+        .weather-bg-wind { background: linear-gradient(180deg, #5F9EA0 0%, #8B8680 100%); }
+        .weather-bg-still { background: linear-gradient(180deg, #2C2C2C 0%, #1A1A1A 100%); }
+        .weather-bg-dusk { background: linear-gradient(180deg, #FF6B6B 0%, #4A0E4E 100%); }
+        .weather-bg-night { background: linear-gradient(180deg, #0B0B2B 0%, #000000 100%); }
+        .weather-bg-thunder { background: linear-gradient(180deg, #191970 0%, #000000 100%); }
+        .weather-bg-snow { background: linear-gradient(180deg, #E8E8E8 0%, #B0C4DE 100%); }
+
+        /* 天气标签 */
+        .weather-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .weather-badge svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        /* 呼吸小球容器 */
+        .orb-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        /* 外发光 */
+        .orb-glow {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.3;
+            animation: breathe-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe-glow {
+            0%, 100% { transform: scale(0.9); opacity: 0.2; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+        }
+
+        /* 主球体 */
+        .orb {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            position: relative;
+            animation: breathe 4s ease-in-out infinite;
+            box-shadow: inset -20px -20px 60px rgba(0,0,0,0.1),
+                        inset 20px 20px 60px rgba(255,255,255,0.4),
+                        0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.85); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 高光效果 */
+        .orb::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            filter: blur(20px);
+        }
+
+        /* 球体颜色 */
+        .orb-clear { background: radial-gradient(circle at 30% 30%, #FFF9E6, #FFD700 50%, #FFA500); }
+        .orb-lightCloud { background: radial-gradient(circle at 30% 30%, #FFFFFF, #C0C0C0 50%, #A0A0A0); }
+        .orb-overcast { background: radial-gradient(circle at 30% 30%, #E0E0E0, #808080 50%, #606060); }
+        .orb-fog { background: radial-gradient(circle at 30% 30%, #FFFFFF, #E0E0E0 50%, #C0C0C0); }
+        .orb-rain { background: radial-gradient(circle at 30% 30%, #B0D4F1, #4A90D9 50%, #2E5C8A); }
+        .orb-heavyRain { background: radial-gradient(circle at 30% 30%, #4A5568, #2C3E50 50%, #1A252F); }
+        .orb-wind { background: radial-gradient(circle at 30% 30%, #E0E0E0, #7F8C8D 50%, #5D6D7E); }
+        .orb-still { background: radial-gradient(circle at 30% 30%, #4A5568, #34495E 50%, #2C3E50); }
+        .orb-dusk { background: radial-gradient(circle at 30% 30%, #FFB6B6, #E74C3C 50%, #C0392B); }
+        .orb-night { background: radial-gradient(circle at 30% 30%, #D8BFD8, #8E44AD 50%, #6C3483); }
+        .orb-thunder { background: radial-gradient(circle at 30% 30%, #D8BFD8, #9B59B6 50%, #7D3C98); }
+        .orb-snow { background: radial-gradient(circle at 30% 30%, #FFFFFF, #ECF0F1 50%, #BDC3C7); }
+
+        /* 天气图标 */
+        .weather-icon {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            animation: icon-breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes icon-breathe {
+            0%, 100% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 文字区域 */
+        .text-area {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .main-text {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 3px;
+            opacity: 0.9;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .mood-text {
+            font-size: 14px;
+            font-weight: 300;
+            opacity: 0.6;
+            margin-top: 12px;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        /* 输入按钮 */
+        .input-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .input-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 弹窗遮罩 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* 弹窗内容 */
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px 40px;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        /* 弹窗头部 */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* 输入框 */
+        .mood-input {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+
+        .mood-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .mood-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 快速标签 */
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tag.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.6);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 加载动画 */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 天气特效 Canvas */
+        #weather-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 提示消息 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* API 状态提示 */
+        .api-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="weather-bg-clear">
+        <div class="api-status" id="api-status">🔮 Gemini AI</div>
+        <canvas id="weather-effects"></canvas>
+        
+        <!-- 天气标签 -->
+        <div class="weather-badge">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span id="weather-text">内心天气：晴朗</span>
+        </div>
+
+        <!-- 呼吸小球 -->
+        <div class="orb-container">
+            <div class="orb-glow" id="orb-glow"></div>
+            <div class="orb orb-clear" id="orb">
+                <span class="weather-icon" id="weather-icon">☀️</span>
+            </div>
+        </div>
+
+        <!-- 文字区域 -->
+        <div class="text-area">
+            <div class="main-text">我与你同在</div>
+            <div class="mood-text" id="mood-text"></div>
+        </div>
+
+        <!-- 输入按钮 -->
+        <button class="input-btn" onclick="openModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            记录此刻
+        </button>
+    </div>
+
+    <!-- 输入弹窗 -->
+    <div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title">记录心情</span>
+                <button class="close-btn" onclick="closeModal()">取消</button>
+            </div>
+            
+            <div style="color: rgba(255,255,255,0.8); font-size: 16px; margin-bottom: 16px;">
+                此刻的你，是什么状态？
+            </div>
+            
+            <textarea 
+                class="mood-input" 
+                id="mood-input" 
+                placeholder="比如：今天工作压力很大，有点喘不过气..."
+                oninput="checkInput()"
+            ></textarea>
+            
+            <div class="quick-tags">
+                <button class="tag" onclick="selectTag('焦虑')">焦虑</button>
+                <button class="tag" onclick="selectTag('平静')">平静</button>
+                <button class="tag" onclick="selectTag('孤独')">孤独</button>
+                <button class="tag" onclick="selectTag('开心')">开心</button>
+                <button class="tag" onclick="selectTag('迷茫')">迷茫</button>
+                <button class="tag" onclick="selectTag('思念')">思念</button>
+            </div>
+            
+            <button class="submit-btn" id="submit-btn" onclick="analyzeMood()" disabled>
+                <span>生成天气</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Gemini API 配置
+        const GEMINI_API_KEY = 'AIzaSyCzX60tSYePqrZ4nA0a9uERpIoggMXJbiM';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        
+        // 天气配置
+        const weatherConfig = {
+            clear: { name: '晴朗', icon: '☀️', bg: 'weather-bg-clear', orb: 'orb-clear', keywords: ['晴朗', '晴天', '开心', '快乐', '幸福', '满足', '愉悦', 'positive'] },
+            lightCloud: { name: '多云', icon: '⛅', bg: 'weather-bg-lightCloud', orb: 'orb-lightCloud', keywords: ['多云', '轻微忧虑', '不确定', '犹豫'] },
+            overcast: { name: '阴天', icon: '☁️', bg: 'weather-bg-overcast', orb: 'orb-overcast', keywords: ['阴天', '郁闷', '低落', '无精打采', '压抑', '沮丧'] },
+            fog: { name: '雾', icon: '🌫️', bg: 'weather-bg-fog', orb: 'orb-fog', keywords: ['雾', '迷茫', '困惑', '看不清', '迷失'] },
+            rain: { name: '小雨', icon: '🌧️', bg: 'weather-bg-rain', orb: 'orb-rain', keywords: ['小雨', '雨', '伤感', '思念', '温柔', '怀旧', '想'] },
+            heavyRain: { name: '大雨', icon: '⛈️', bg: 'weather-bg-heavyRain', orb: 'orb-heavyRain', keywords: ['大雨', '暴雨', '悲伤', '痛苦', '失落', '难过', '哭'] },
+            wind: { name: '风', icon: '💨', bg: 'weather-bg-wind', orb: 'orb-wind', keywords: ['风', '焦虑', '烦躁', '紧张', '压力', '急', '躁'] },
+            still: { name: '无风', icon: '🌑', bg: 'weather-bg-still', orb: 'orb-still', keywords: ['无风', '静止', '空虚', '麻木', '疲惫', '累', '麻'] },
+            dusk: { name: '黄昏', icon: '🌅', bg: 'weather-bg-dusk', orb: 'orb-dusk', keywords: ['黄昏', '傍晚', '怀旧', '感慨', '时光', '曾经', '过去'] },
+            night: { name: '深夜', icon: '🌙', bg: 'weather-bg-night', orb: 'orb-night', keywords: ['深夜', '夜', '黑夜', '孤独', '寂寞', '沉思', '一个人'] },
+            thunder: { name: '雷雨', icon: '⚡', bg: 'weather-bg-thunder', orb: 'orb-thunder', keywords: ['雷雨', '雷', '愤怒', '爆发', '生气', '怒', '烦死了'] },
+            snow: { name: '雪', icon: '❄️', bg: 'weather-bg-snow', orb: 'orb-snow', keywords: ['雪', '下雪', '宁静', '纯净', '平和', '安静', '禅'] }
+        };
+
+        let currentWeather = 'clear';
+        let weatherEffectId = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initWeatherEffects();
+        });
+
+        // 打开弹窗
+        function openModal() {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('mood-input').focus();
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('mood-input').value = '';
+                checkInput();
+            }, 300);
+        }
+
+        // 点击遮罩关闭
+        function closeModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeModal();
+            }
+        }
+
+        // 选择标签
+        function selectTag(tag) {
+            document.getElementById('mood-input').value = tag;
+            checkInput();
+        }
+
+        // 检查输入
+        function checkInput() {
+            const input = document.getElementById('mood-input').value.trim();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = !input;
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 调用 Gemini AI 分析情绪
+        async function analyzeMood() {
+            const input = document.getElementById('mood-input').value.trim();
+            if (!input) return;
+
+            const btn = document.getElementById('submit-btn');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div><span>Gemini 分析中...</span>';
+
+            try {
+                const prompt = `你是一位富有同理心的天气映射师。根据用户的情绪状态描述，选择最匹配的天气现象。
+
+可选天气及对应情绪：
+- 晴朗：开心、满足、充满希望、愉悦
+- 多云：轻微忧虑、不确定、犹豫
+- 阴天：郁闷、低落、无精打采、压抑
+- 雾：迷茫、困惑、看不清方向、不确定
+- 小雨：伤感、思念、温柔的情绪、怀旧
+- 大雨：悲伤、痛苦、情绪宣泄、失落
+- 风：焦虑、烦躁、坐立不安、紧张
+- 无风：空虚、麻木、失去感知、疲惫
+- 黄昏：怀旧、感慨、时光流逝、思念
+- 深夜：孤独、沉思、内省、寂寞
+- 雷雨：愤怒、爆发、强烈情绪、烦躁
+- 雪：宁静、纯净、与世隔绝的平和
+
+用户状态描述："${input}"
+
+请只返回天气名称（必须是上面列表中的某一个，如"小雨"），不要有任何解释，只返回两个字或三个字的天气名称。`;
+
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.3,
+                            maxOutputTokens: 10,
+                            topP: 0.8,
+                            topK: 10
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'API 请求失败');
+                }
+                
+                const data = await response.json();
+                
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error('API 返回数据异常');
+                }
+                
+                const weatherName = data.candidates[0].content.parts[0].text.trim();
+                console.log('Gemini 分析结果:', weatherName);
+                applyWeatherByName(weatherName, input);
+                
+            } catch (error) {
+                console.error('Gemini API 错误:', error);
+                showToast('AI 分析失败，使用本地分析...');
+                // 失败时回退到本地分析
+                await simulateLocalAnalysis(input);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // 本地模拟分析（备选方案）
+        async function simulateLocalAnalysis(input) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const lower = input.toLowerCase();
+            let weather = 'lightCloud';
+            
+            // 关键词匹配
+            for (const [key, config] of Object.entries(weatherConfig)) {
+                if (config.keywords.some(k => lower.includes(k))) {
+                    weather = key;
+                    break;
+                }
+            }
+            
+            applyWeather(weather, input);
+        }
+
+        // 根据天气名称应用天气
+        function applyWeatherByName(weatherName, moodText) {
+            // 提取天气名称（去除可能的引号、标点等）
+            const cleanName = weatherName.replace(/["'，。！？.!?]/g, '').trim();
+            
+            // 查找匹配的天气
+            let matchedWeather = null;
+            
+            // 首先精确匹配
+            for (const [key, config] of Object.entries(weatherConfig)) {
+                if (config.name === cleanName || config.keywords.includes(cleanName)) {
+                    matchedWeather = key;
+                    break;
+                }
+            }
+            
+            // 如果没找到，尝试模糊匹配
+            if (!matchedWeather) {
+                const nameMap = {
+                    '晴朗': 'clear', '晴天': 'clear', '阳光': 'clear',
+                    '多云': 'lightCloud', '阴天': 'overcast', '阴': 'overcast',
+                    '雾': 'fog', '大雾': 'fog', '雾霾': 'fog',
+                    '小雨': 'rain', '雨': 'rain', '下雨': 'rain', '阵雨': 'rain',
+                    '大雨': 'heavyRain', '暴雨': 'heavyRain',
+                    '风': 'wind', '大风': 'wind', '微风': 'wind',
+                    '无风': 'still', '静止': 'still',
+                    '黄昏': 'dusk', '傍晚': 'dusk', '日落': 'dusk',
+                    '深夜': 'night', '夜': 'night', '黑夜': 'night', '夜晚': 'night',
+                    '雷雨': 'thunder', '雷': 'thunder', '闪电': 'thunder',
+                    '雪': 'snow', '下雪': 'snow', '大雪': 'snow'
+                };
+                
+                matchedWeather = nameMap[cleanName] || 'lightCloud';
+            }
+            
+            applyWeather(matchedWeather, moodText);
+        }
+
+        // 应用天气效果
+        function applyWeather(weather, moodText) {
+            const config = weatherConfig[weather];
+            if (!config) {
+                console.error('未知天气:', weather);
+                return;
+            }
+            
+            currentWeather = weather;
+            
+            // 更新背景
+            const app = document.getElementById('app');
+            Object.values(weatherConfig).forEach(w => app.classList.remove(w.bg));
+            app.classList.add(config.bg);
+            
+            // 更新小球
+            const orb = document.getElementById('orb');
+            const orbGlow = document.getElementById('orb-glow');
+            Object.values(weatherConfig).forEach(w => orb.classList.remove(w.orb));
+            orb.classList.add(config.orb);
+            
+            // 更新图标和文字
+            document.getElementById('weather-icon').textContent = config.icon;
+            document.getElementById('weather-text').textContent = `内心天气：${config.name}`;
+            document.getElementById('mood-text').textContent = moodText ? `「${moodText}」` : '';
+            
+            // 更新发光颜色
+            const glowColors = {
+                clear: 'rgba(255, 215, 0, 0.4)',
+                lightCloud: 'rgba(192, 192, 192, 0.4)',
+                overcast: 'rgba(128, 128, 128, 0.4)',
+                fog: 'rgba(224, 224, 224, 0.4)',
+                rain: 'rgba(74, 144, 217, 0.4)',
+                heavyRain: 'rgba(44, 62, 80, 0.4)',
+                wind: 'rgba(127, 140, 141, 0.4)',
+                still: 'rgba(52, 73, 94, 0.4)',
+                dusk: 'rgba(231, 76, 60, 0.4)',
+                night: 'rgba(142, 68, 173, 0.4)',
+                thunder: 'rgba(155, 89, 182, 0.4)',
+                snow: 'rgba(236, 240, 241, 0.4)'
+            };
+            orbGlow.style.background = glowColors[weather] || glowColors.clear;
+            
+            // 更新特效
+            updateWeatherEffects(weather);
+            
+            // 关闭弹窗并提示
+            closeModal();
+            showToast(`已切换至${config.name}天气`);
+        }
+
+        // 初始化天气特效 Canvas
+        function initWeatherEffects() {
+            const canvas = document.getElementById('weather-effects');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        // 更新天气特效
+        function updateWeatherEffects(weather) {
+            const canvas = document.getElementById('weather-effects');
+            const ctx = canvas.getContext('2d');
+            
+            // 清除之前的动画
+            if (weatherEffectId) {
+                cancelAnimationFrame(weatherEffectId);
+            }
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 根据天气启动特效
+            switch(weather) {
+                case 'rain':
+                case 'heavyRain':
+                    startRainEffect(ctx, canvas, weather === 'heavyRain' ? 2 : 1);
+                    break;
+                case 'snow':
+                    startSnowEffect(ctx, canvas);
+                    break;
+                case 'wind':
+                    startWindEffect(ctx, canvas);
+                    break;
+                case 'thunder':
+                    startThunderEffect(ctx, canvas);
+                    break;
+                case 'fog':
+                    startFogEffect(ctx, canvas);
+                    break;
+            }
+        }
+
+        // 雨特效
+        function startRainEffect(ctx, canvas, intensity) {
+            const drops = [];
+            const count = 100 * intensity;
+            
+            for (let i = 0; i < count; i++) {
+                drops.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: 5 + Math.random() * 10,
+                    length: 10 + Math.random() * 20
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                
+                drops.forEach(drop => {
+                    ctx.beginPath();
+                    ctx.moveTo(drop.x, drop.y);
+                    ctx.lineTo(drop.x - 2, drop.y + drop.length);
+                    ctx.stroke();
+                    
+                    drop.y += drop.speed;
+                    drop.x -= 1;
+                    
+                    if (drop.y > canvas.height) {
+                        drop.y = -drop.length;
+                        drop.x = Math.random() * canvas.width;
+                    }
+                });
+                
+                weatherEffectId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 雪特效
+        function startSnowEffect(ctx, canvas) {
+            const flakes = [];
+            for (let i = 0; i < 50; i++) {
+                flakes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: 1 + Math.random() * 3,
+                    speed: 0.5 + Math.random() * 1.5,
+                    drift: (Math.random() - 0.5) * 0.5
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                flakes.forEach(flake => {
+                    ctx.beginPath();
+                    ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fill();
+                    
+                    flake.y += flake.speed;
+                    flake.x += flake.drift;
+                    
+                    if (flake.y > canvas.height) {
+                        flake.y = -5;
+                        flake.x = Math.random() * canvas.width;
+                    }
+                    if (flake.x > canvas.width) flake.x = 0;
+                    if (flake.x < 0) flake.x = canvas.width;
+                });
+                
+                weatherEffectId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 风特效
+        function startWindEffect(ctx, canvas) {
+            const lines = [];
+            for (let i = 0; i < 5; i++) {
+                lines.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    width: 100 + Math.random() * 200,
+                    speed: 3 + Math.random() * 2
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 2;
+                
+                lines.forEach(line => {
+                    ctx.beginPath();
+                    ctx.moveTo(line.x, line.y);
+                    ctx.lineTo(line.x + line.width, line.y);
+                    ctx.stroke();
+                    
+                    line.x += line.speed;
+                    
+                    if (line.x > canvas.width) {
+                        line.x = -line.width;
+                        line.y = Math.random() * canvas.height;
+                    }
+                });
+                
+                weatherEffectId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 雷电特效
+        function startThunderEffect(ctx, canvas) {
+            let lastFlash = 0;
+            
+            function animate(timestamp) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 随机闪电
+                if (timestamp - lastFlash > 3000 + Math.random() * 4000) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    lastFlash = timestamp;
+                    
+                    setTimeout(() => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }, 100);
+                }
+                
+                weatherEffectId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 雾特效
+        function startFogEffect(ctx, canvas) {
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const gradient = ctx.createRadialGradient(
+                    canvas.width / 2, canvas.height / 2, 50,
+                    canvas.width / 2, canvas.height / 2, 300
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                weatherEffectId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // ESC 键关闭弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>
