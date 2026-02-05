@@ -513,13 +513,12 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // DeepSeek API 配置（需要替换为你的 API Key）
-        // 获取地址：https://platform.deepseek.com/
+        // DeepSeek API 配置（从 GitHub Secrets 读取）
         const DEEPSEEK_API_KEY = window.API_CONFIG?.DEEPSEEK_API_KEY || '';
-const DEEPSEEK_API_URL = window.API_CONFIG?.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
-const REQUEST_TIMEOUT = window.API_CONFIG?.REQUEST_TIMEOUT || 5000;
-        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-        const REQUEST_TIMEOUT = 5000; // 5秒超时
+        const DEEPSEEK_API_URL = window.API_CONFIG?.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
+        const REQUEST_TIMEOUT = window.API_CONFIG?.REQUEST_TIMEOUT || 5000;
+        
+        // 天气配置
         
         // 天气配置
         const weatherConfig = {
