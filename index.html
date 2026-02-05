@@ -429,13 +429,13 @@
 </head>
 <body>
     <div id="app" class="weather-bg-clear light-theme">
-        <div class="api-status" id="api-status">Gemini AI</div>
+        <div class="api-status" id="api-status">DeepSeek AI</div>
         <canvas id="weather-effects"></canvas>
         
         <!-- 天气标签 -->
         <div class="weather-badge">
             <svg viewBox="0 0 24 24" width="12" height="12">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
             <span id="weather-text">内心天气：晴朗</span>
         </div>
@@ -507,11 +507,13 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // Gemini API 配置
-        const GEMINI_API_KEY = 'AIzaSyCzX60tSYePqrZ4nA0a9uERpIoggMXJbiM';
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        // DeepSeek API 配置（需要替换为你的 API Key）
+        // 获取地址：https://platform.deepseek.com/
+        const DEEPSEEK_API_KEY = 'sk-请替换为你的DeepSeekKey';
+        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+        const REQUEST_TIMEOUT = 5000; // 5秒超时
         
-        // 天气配置（使用 SVG 图标代替 Emoji）
+        // 天气配置
         const weatherConfig = {
             clear: { 
                 name: '晴朗', 
@@ -519,7 +521,7 @@
                 orb: 'orb-clear',
                 isLight: true,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#FFD700"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#FFD700" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`,
-                keywords: ['晴朗', '晴天', '开心', '快乐', '幸福', '满足', '愉悦', 'positive'] 
+                keywords: ['晴朗', '晴天', '开心', '快乐', '幸福', '满足', '愉悦'] 
             },
             lightCloud: { 
                 name: '多云', 
@@ -535,7 +537,7 @@
                 orb: 'orb-overcast',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#808080"/></svg>`,
-                keywords: ['阴天', '郁闷', '低落', '无精打采', '压抑', '沮丧'] 
+                keywords: ['阴天', '郁闷', '低落', '无精打采', '压抑'] 
             },
             fog: { 
                 name: '雾', 
@@ -551,7 +553,7 @@
                 orb: 'orb-rain',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#708090"/><path d="M8 22v-2m4 2v-2m4 2v-2" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/></svg>`,
-                keywords: ['小雨', '雨', '伤感', '思念', '温柔', '怀旧', '想'] 
+                keywords: ['小雨', '雨', '伤感', '思念', '温柔', '怀旧'] 
             },
             heavyRain: { 
                 name: '大雨', 
@@ -559,7 +561,7 @@
                 orb: 'orb-heavyRain',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#2C3E50"/><path d="M8 23v-3m4 3v-3m4 3v-3" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/><path d="M10 18l-2 3m6-3l-2 3" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/></svg>`,
-                keywords: ['大雨', '暴雨', '悲伤', '痛苦', '失落', '难过', '哭'] 
+                keywords: ['大雨', '暴雨', '悲伤', '痛苦', '失落', '难过'] 
             },
             wind: { 
                 name: '风', 
@@ -567,7 +569,7 @@
                 orb: 'orb-wind',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M4 10h3m10 0h3M4 14h7m3 0h3M4 18h3m10 0h3" stroke="#E0E0E0" stroke-width="2" stroke-linecap="round"/></svg>`,
-                keywords: ['风', '焦虑', '烦躁', '紧张', '压力', '急', '躁'] 
+                keywords: ['风', '焦虑', '烦躁', '紧张', '压力', '急'] 
             },
             still: { 
                 name: '无风', 
@@ -575,7 +577,7 @@
                 orb: 'orb-still',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#34495E" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#34495E"/></svg>`,
-                keywords: ['无风', '静止', '空虚', '麻木', '疲惫', '累', '麻'] 
+                keywords: ['无风', '静止', '空虚', '麻木', '疲惫', '累'] 
             },
             dusk: { 
                 name: '黄昏', 
@@ -583,7 +585,7 @@
                 orb: 'orb-dusk',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M12 2v6m0 6v8" stroke="#FF6B6B" stroke-width="2"/><path d="M4 18h16" stroke="#E74C3C" stroke-width="3" stroke-linecap="round"/><path d="M6 14l-2 2m16-2l2 2M2 10l2-2m20 2l-2-2" stroke="#FF6B6B" stroke-width="2"/></svg>`,
-                keywords: ['黄昏', '傍晚', '怀旧', '感慨', '时光', '曾经', '过去'] 
+                keywords: ['黄昏', '傍晚', '怀旧', '感慨', '时光', '曾经'] 
             },
             night: { 
                 name: '深夜', 
@@ -591,7 +593,7 @@
                 orb: 'orb-night',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#E0E0E0"/><circle cx="8" cy="8" r="1" fill="white"/><circle cx="16" cy="6" r="1" fill="white"/></svg>`,
-                keywords: ['深夜', '夜', '黑夜', '孤独', '寂寞', '沉思', '一个人'] 
+                keywords: ['深夜', '夜', '黑夜', '孤独', '寂寞', '沉思'] 
             },
             thunder: { 
                 name: '雷雨', 
@@ -599,7 +601,7 @@
                 orb: 'orb-thunder',
                 isLight: false,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#2C3E50"/><path d="M13 16l-4 6h4l-2 6" stroke="#FFD700" stroke-width="2" fill="none"/></svg>`,
-                keywords: ['雷雨', '雷', '愤怒', '爆发', '生气', '怒', '烦死了'] 
+                keywords: ['雷雨', '雷', '愤怒', '爆发', '生气', '怒'] 
             },
             snow: { 
                 name: '雪', 
@@ -607,7 +609,7 @@
                 orb: 'orb-snow',
                 isLight: true,
                 iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14" stroke="#ECF0F1" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="#ECF0F1"/></svg>`,
-                keywords: ['雪', '下雪', '宁静', '纯净', '平和', '安静', '禅'] 
+                keywords: ['雪', '下雪', '宁静', '纯净', '平和', '安静'] 
             }
         };
 
@@ -662,131 +664,188 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // 调用 Gemini AI 分析情绪
+        // 主分析函数（带超时控制）
         async function analyzeMood() {
             const input = document.getElementById('mood-input').value.trim();
             if (!input) return;
 
             const btn = document.getElementById('submit-btn');
-            const originalContent = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div><span>Gemini 分析中...</span>';
+            btn.innerHTML = '<div class="spinner"></div><span>分析中...</span>';
 
+            // 先尝试本地快速匹配（关键词命中直接返回，无需等待API）
+            const localMatch = findLocalMatch(input);
+            if (localMatch) {
+                console.log('本地匹配成功:', localMatch);
+                applyWeather(localMatch, input);
+                btn.disabled = false;
+                btn.innerHTML = '<span>生成天气</span>';
+                return;
+            }
+
+            // 本地未命中，调用 DeepSeek API（带超时）
             try {
-                const prompt = `你是一位富有同理心的天气映射师。根据用户的情绪状态描述，选择最匹配的天气现象。
-
-可选天气及对应情绪：
-- 晴朗：开心、满足、充满希望、愉悦
-- 多云：轻微忧虑、不确定、犹豫
-- 阴天：郁闷、低落、无精打采、压抑
-- 雾：迷茫、困惑、看不清方向、不确定
-- 小雨：伤感、思念、温柔的情绪、怀旧
-- 大雨：悲伤、痛苦、情绪宣泄、失落
-- 风：焦虑、烦躁、坐立不安、紧张
-- 无风：空虚、麻木、失去感知、疲惫
-- 黄昏：怀旧、感慨、时光流逝、思念
-- 深夜：孤独、沉思、内省、寂寞
-- 雷雨：愤怒、爆发、强烈情绪、烦躁
-- 雪：宁静、纯净、与世隔绝的平和
-
-用户状态描述："${input}"
-
-请只返回天气名称（必须是上面列表中的某一个，如"小雨"），不要有任何解释，只返回两个字或三个字的天气名称。`;
-
-                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: prompt
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 10,
-                            topP: 0.8,
-                            topK: 10
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'API 请求失败');
+                const result = await Promise.race([
+                    callDeepSeekAPI(input),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('TIMEOUT')), REQUEST_TIMEOUT)
+                    )
+                ]);
+                
+                if (result) {
+                    applyWeatherByName(result, input);
+                } else {
+                    throw new Error('API返回空结果');
                 }
-                
-                const data = await response.json();
-                
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                    throw new Error('API 返回数据异常');
-                }
-                
-                const weatherName = data.candidates[0].content.parts[0].text.trim();
-                console.log('Gemini 分析结果:', weatherName);
-                applyWeatherByName(weatherName, input);
                 
             } catch (error) {
-                console.error('Gemini API 错误:', error);
-                showToast('AI 分析失败，使用本地分析...');
-                await simulateLocalAnalysis(input);
+                console.error('API调用失败:', error.message);
+                
+                if (error.message === 'TIMEOUT') {
+                    showToast('AI响应较慢，使用智能匹配...');
+                } else {
+                    showToast('AI服务繁忙，使用智能匹配...');
+                }
+                
+                // 超时或失败时使用本地智能分析
+                const smartMatch = smartLocalAnalysis(input);
+                applyWeather(smartMatch, input);
+                
             } finally {
-                btn.innerHTML = originalContent;
                 btn.disabled = false;
+                btn.innerHTML = '<span>生成天气</span>';
             }
         }
 
-        // 本地模拟分析（备选方案）
-        async function simulateLocalAnalysis(input) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
+        // 本地关键词匹配（最快）
+        function findLocalMatch(input) {
             const lower = input.toLowerCase();
-            let weather = 'lightCloud';
             
             for (const [key, config] of Object.entries(weatherConfig)) {
                 if (config.keywords.some(k => lower.includes(k))) {
-                    weather = key;
-                    break;
+                    return key;
                 }
             }
-            
-            applyWeather(weather, input);
+            return null;
         }
 
-        // 根据天气名称应用天气
+        // 智能本地分析（根据情感倾向判断）
+        function smartLocalAnalysis(input) {
+            const lower = input.toLowerCase();
+            
+            // 情感词典
+            const positiveWords = ['开心', '快乐', '幸福', '满足', '棒', '好', '喜欢', '爱', '希望', '期待'];
+            const negativeWords = ['难过', '伤心', '痛苦', '糟糕', '坏', '恨', '失望', '绝望', '抑郁'];
+            const anxiousWords = ['焦虑', '紧张', '担心', '害怕', '压力', '急', '烦'];
+            const calmWords = ['平静', '宁静', '安静', '放松', '舒服', '自在'];
+            
+            let scores = {
+                clear: 0, lightCloud: 0, overcast: 0, fog: 0,
+                rain: 0, heavyRain: 0, wind: 0, still: 0,
+                dusk: 0, night: 0, thunder: 0, snow: 0
+            };
+            
+            // 统计情感倾向
+            positiveWords.forEach(w => { if (lower.includes(w)) scores.clear += 2; });
+            negativeWords.forEach(w => { 
+                if (lower.includes(w)) {
+                    if (lower.includes('哭') || lower.includes('痛')) scores.heavyRain += 3;
+                    else scores.overcast += 2;
+                }
+            });
+            anxiousWords.forEach(w => { if (lower.includes(w)) scores.wind += 3; });
+            calmWords.forEach(w => { if (lower.includes(w)) scores.snow += 2; });
+            
+            // 特殊规则
+            if (lower.includes('想') || lower.includes('念')) scores.rain += 2;
+            if (lower.includes('迷茫') || lower.includes('不知道')) scores.fog += 3;
+            if (lower.includes('一个人') || lower.includes('孤独')) scores.night += 3;
+            if (lower.includes('累') || lower.includes('麻')) scores.still += 2;
+            if (lower.includes('生气') || lower.includes('怒')) scores.thunder += 3;
+            if (lower.includes('过去') || lower.includes('曾经')) scores.dusk += 2;
+            
+            // 返回得分最高的
+            const bestMatch = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+            console.log('智能分析得分:', scores, '选中:', bestMatch[0]);
+            
+            return bestMatch[1] > 0 ? bestMatch[0] : 'lightCloud';
+        }
+
+        // 调用 DeepSeek API
+        async function callDeepSeekAPI(input) {
+            const response = await fetch(DEEPSEEK_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: '你是一位富有同理心的天气映射师。根据用户的情绪状态描述，选择最匹配的天气现象。只返回天气名称（晴朗、多云、阴天、雾、小雨、大雨、风、无风、黄昏、深夜、雷雨、雪中的一个），不要解释。'
+                        },
+                        {
+                            role: 'user',
+                            content: `用户状态描述："${input}"\n请判断对应天气：`
+                        }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 10
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'API请求失败');
+            }
+            
+            const data = await response.json();
+            console.log('DeepSeek返回:', data);
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('API返回数据异常');
+            }
+            
+            return data.choices[0].message.content.trim();
+        }
+
+        // 根据天气名称应用
         function applyWeatherByName(weatherName, moodText) {
             const cleanName = weatherName.replace(/["'，。！？.!?]/g, '').trim();
             
-            let matchedWeather = null;
-            
+            // 直接匹配
             for (const [key, config] of Object.entries(weatherConfig)) {
                 if (config.name === cleanName || config.keywords.includes(cleanName)) {
-                    matchedWeather = key;
-                    break;
+                    applyWeather(key, moodText);
+                    return;
                 }
             }
             
-            if (!matchedWeather) {
-                const nameMap = {
-                    '晴朗': 'clear', '晴天': 'clear', '阳光': 'clear',
-                    '多云': 'lightCloud', '阴天': 'overcast', '阴': 'overcast',
-                    '雾': 'fog', '大雾': 'fog', '雾霾': 'fog',
-                    '小雨': 'rain', '雨': 'rain', '下雨': 'rain', '阵雨': 'rain',
-                    '大雨': 'heavyRain', '暴雨': 'heavyRain',
-                    '风': 'wind', '大风': 'wind', '微风': 'wind',
-                    '无风': 'still', '静止': 'still',
-                    '黄昏': 'dusk', '傍晚': 'dusk', '日落': 'dusk',
-                    '深夜': 'night', '夜': 'night', '黑夜': 'night', '夜晚': 'night',
-                    '雷雨': 'thunder', '雷': 'thunder', '闪电': 'thunder',
-                    '雪': 'snow', '下雪': 'snow', '大雪': 'snow'
-                };
-                
-                matchedWeather = nameMap[cleanName] || 'lightCloud';
-            }
+            // 模糊匹配
+            const nameMap = {
+                '晴朗': 'clear', '晴天': 'clear', '阳光': 'clear',
+                '多云': 'lightCloud', '阴天': 'overcast', '阴': 'overcast',
+                '雾': 'fog', '大雾': 'fog', '雾霾': 'fog',
+                '小雨': 'rain', '雨': 'rain', '下雨': 'rain',
+                '大雨': 'heavyRain', '暴雨': 'heavyRain',
+                '风': 'wind', '大风': 'wind', '微风': 'wind',
+                '无风': 'still', '静止': 'still',
+                '黄昏': 'dusk', '傍晚': 'dusk', '日落': 'dusk',
+                '深夜': 'night', '夜': 'night', '黑夜': 'night',
+                '雷雨': 'thunder', '雷': 'thunder', '闪电': 'thunder',
+                '雪': 'snow', '下雪': 'snow', '大雪': 'snow'
+            };
             
-            applyWeather(matchedWeather, moodText);
+            const matched = nameMap[cleanName];
+            if (matched) {
+                applyWeather(matched, moodText);
+            } else {
+                // 未识别时使用智能分析
+                const smart = smartLocalAnalysis(moodText);
+                applyWeather(smart, moodText);
+            }
         }
 
         // 应用天气效果
@@ -800,16 +859,12 @@
             currentWeather = weather;
             const app = document.getElementById('app');
             
-            // 移除所有背景和主题类
-            Object.values(weatherConfig).forEach(w => {
-                app.classList.remove(w.bg);
-            });
+            // 移除所有类和主题
+            Object.values(weatherConfig).forEach(w => app.classList.remove(w.bg));
             app.classList.remove('light-theme');
             
             // 添加新背景
             app.classList.add(config.bg);
-            
-            // 根据背景亮度添加主题类
             if (config.isLight) {
                 app.classList.add('light-theme');
             }
@@ -820,12 +875,12 @@
             Object.values(weatherConfig).forEach(w => orb.classList.remove(w.orb));
             orb.classList.add(config.orb);
             
-            // 更新 SVG 图标
+            // 更新内容
             document.getElementById('weather-icon').innerHTML = config.iconSvg;
             document.getElementById('weather-text').textContent = `内心天气：${config.name}`;
             document.getElementById('mood-text').textContent = moodText ? `「${moodText}」` : '';
             
-            // 更新发光颜色
+            // 发光颜色
             const glowColors = {
                 clear: 'rgba(255, 215, 0, 0.4)',
                 lightCloud: 'rgba(192, 192, 192, 0.4)',
@@ -847,7 +902,7 @@
             showToast(`已切换至${config.name}天气`);
         }
 
-        // 初始化天气特效 Canvas
+        // 天气特效
         function initWeatherEffects() {
             const canvas = document.getElementById('weather-effects');
             canvas.width = window.innerWidth;
@@ -859,15 +914,11 @@
             });
         }
 
-        // 更新天气特效
         function updateWeatherEffects(weather) {
             const canvas = document.getElementById('weather-effects');
             const ctx = canvas.getContext('2d');
             
-            if (weatherEffectId) {
-                cancelAnimationFrame(weatherEffectId);
-            }
-            
+            if (weatherEffectId) cancelAnimationFrame(weatherEffectId);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             switch(weather) {
@@ -890,12 +941,9 @@
             }
         }
 
-        // 雨特效
         function startRainEffect(ctx, canvas, intensity) {
             const drops = [];
-            const count = 100 * intensity;
-            
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < 100 * intensity; i++) {
                 drops.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -914,22 +962,18 @@
                     ctx.moveTo(drop.x, drop.y);
                     ctx.lineTo(drop.x - 2, drop.y + drop.length);
                     ctx.stroke();
-                    
                     drop.y += drop.speed;
                     drop.x -= 1;
-                    
                     if (drop.y > canvas.height) {
                         drop.y = -drop.length;
                         drop.x = Math.random() * canvas.width;
                     }
                 });
-                
                 weatherEffectId = requestAnimationFrame(animate);
             }
             animate();
         }
 
-        // 雪特效
         function startSnowEffect(ctx, canvas) {
             const flakes = [];
             for (let i = 0; i < 50; i++) {
@@ -944,30 +988,23 @@
             
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
                 flakes.forEach(flake => {
                     ctx.beginPath();
                     ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                     ctx.fill();
-                    
                     flake.y += flake.speed;
                     flake.x += flake.drift;
-                    
                     if (flake.y > canvas.height) {
                         flake.y = -5;
                         flake.x = Math.random() * canvas.width;
                     }
-                    if (flake.x > canvas.width) flake.x = 0;
-                    if (flake.x < 0) flake.x = canvas.width;
                 });
-                
                 weatherEffectId = requestAnimationFrame(animate);
             }
             animate();
         }
 
-        // 风特效
         function startWindEffect(ctx, canvas) {
             const lines = [];
             for (let i = 0; i < 5; i++) {
@@ -983,69 +1020,54 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.lineWidth = 2;
-                
                 lines.forEach(line => {
                     ctx.beginPath();
                     ctx.moveTo(line.x, line.y);
                     ctx.lineTo(line.x + line.width, line.y);
                     ctx.stroke();
-                    
                     line.x += line.speed;
-                    
                     if (line.x > canvas.width) {
                         line.x = -line.width;
                         line.y = Math.random() * canvas.height;
                     }
                 });
-                
                 weatherEffectId = requestAnimationFrame(animate);
             }
             animate();
         }
 
-        // 雷电特效
         function startThunderEffect(ctx, canvas) {
             let lastFlash = 0;
-            
             function animate(timestamp) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
                 if (timestamp - lastFlash > 3000 + Math.random() * 4000) {
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     lastFlash = timestamp;
-                    
-                    setTimeout(() => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }, 100);
+                    setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 100);
                 }
-                
                 weatherEffectId = requestAnimationFrame(animate);
             }
             animate();
         }
 
-        // 雾特效
         function startFogEffect(ctx, canvas) {
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
                 const gradient = ctx.createRadialGradient(
                     canvas.width / 2, canvas.height / 2, 50,
                     canvas.width / 2, canvas.height / 2, 300
                 );
                 gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
                 gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 weatherEffectId = requestAnimationFrame(animate);
             }
             animate();
         }
 
-        // ESC 键关闭弹窗
+        // ESC键关闭
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeModal();
         });
