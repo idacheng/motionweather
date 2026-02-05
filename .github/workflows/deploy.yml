@@ -1,0 +1,31 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Create config file with API key
+        run: |
+          echo "window.API_CONFIG = {" > config.js
+          echo "  DEEPSEEK_API_KEY: '${{ secrets.DEEPSEEK_API_KEY }}'," >> config.js
+          echo "  DEEPSEEK_API_URL: 'https://api.deepseek.com/v1/chat/completions'," >> config.js
+          echo "  REQUEST_TIMEOUT: 5000" >> config.js
+          echo "};" >> config.js
+      
+      - name: List files
+        run: ls -la
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          exclude_assets: '.github,node_modules'
