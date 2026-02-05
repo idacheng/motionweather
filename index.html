@@ -43,7 +43,28 @@
         .weather-bg-thunder { background: linear-gradient(180deg, #191970 0%, #000000 100%); }
         .weather-bg-snow { background: linear-gradient(180deg, #E8E8E8 0%, #B0C4DE 100%); }
 
-        /* 天气标签 */
+        /* 浅色主题（用于浅背景天气） */
+        .light-theme .weather-badge {
+            color: rgba(50, 50, 50, 0.9);
+            background: rgba(255, 255, 255, 0.4);
+        }
+        .light-theme .text-area {
+            color: #2c3e50;
+        }
+        .light-theme .main-text {
+            text-shadow: 0 2px 10px rgba(255,255,255,0.5);
+        }
+        .light-theme .input-btn {
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .light-theme .api-status {
+            color: #2c3e50;
+            background: rgba(255,255,255,0.4);
+        }
+
+        /* 深色主题（默认，用于深背景天气） */
         .weather-badge {
             display: flex;
             align-items: center;
@@ -55,6 +76,7 @@
             background: rgba(0, 0, 0, 0.2);
             border-radius: 20px;
             backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
         .weather-badge svg {
@@ -152,6 +174,7 @@
             text-align: center;
             color: white;
             margin-bottom: 40px;
+            transition: color 0.3s ease;
         }
 
         .main-text {
@@ -400,17 +423,18 @@
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
             z-index: 100;
+            transition: all 0.3s ease;
         }
     </style>
 </head>
 <body>
-    <div id="app" class="weather-bg-clear">
-        <div class="api-status" id="api-status">🔮 Gemini AI</div>
+    <div id="app" class="weather-bg-clear light-theme">
+        <div class="api-status" id="api-status">Gemini AI</div>
         <canvas id="weather-effects"></canvas>
         
         <!-- 天气标签 -->
         <div class="weather-badge">
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" width="12" height="12">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
             <span id="weather-text">内心天气：晴朗</span>
@@ -420,7 +444,12 @@
         <div class="orb-container">
             <div class="orb-glow" id="orb-glow"></div>
             <div class="orb orb-clear" id="orb">
-                <span class="weather-icon" id="weather-icon">☀️</span>
+                <span class="weather-icon" id="weather-icon">
+                    <svg width="60" height="60" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5" fill="#FFD700"/>
+                        <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#FFD700" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    </svg>
+                </span>
             </div>
         </div>
 
@@ -433,8 +462,8 @@
         <!-- 输入按钮 -->
         <button class="input-btn" onclick="openModal()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
             记录此刻
         </button>
@@ -455,7 +484,7 @@
             <textarea 
                 class="mood-input" 
                 id="mood-input" 
-                placeholder="比如：今天工作压力很大，有点喘不过气..."
+                placeholder="深呼吸，观照你的内心，写下你此刻真实的状态"
                 oninput="checkInput()"
             ></textarea>
             
@@ -482,20 +511,104 @@
         const GEMINI_API_KEY = 'AIzaSyCzX60tSYePqrZ4nA0a9uERpIoggMXJbiM';
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
         
-        // 天气配置
+        // 天气配置（使用 SVG 图标代替 Emoji）
         const weatherConfig = {
-            clear: { name: '晴朗', icon: '☀️', bg: 'weather-bg-clear', orb: 'orb-clear', keywords: ['晴朗', '晴天', '开心', '快乐', '幸福', '满足', '愉悦', 'positive'] },
-            lightCloud: { name: '多云', icon: '⛅', bg: 'weather-bg-lightCloud', orb: 'orb-lightCloud', keywords: ['多云', '轻微忧虑', '不确定', '犹豫'] },
-            overcast: { name: '阴天', icon: '☁️', bg: 'weather-bg-overcast', orb: 'orb-overcast', keywords: ['阴天', '郁闷', '低落', '无精打采', '压抑', '沮丧'] },
-            fog: { name: '雾', icon: '🌫️', bg: 'weather-bg-fog', orb: 'orb-fog', keywords: ['雾', '迷茫', '困惑', '看不清', '迷失'] },
-            rain: { name: '小雨', icon: '🌧️', bg: 'weather-bg-rain', orb: 'orb-rain', keywords: ['小雨', '雨', '伤感', '思念', '温柔', '怀旧', '想'] },
-            heavyRain: { name: '大雨', icon: '⛈️', bg: 'weather-bg-heavyRain', orb: 'orb-heavyRain', keywords: ['大雨', '暴雨', '悲伤', '痛苦', '失落', '难过', '哭'] },
-            wind: { name: '风', icon: '💨', bg: 'weather-bg-wind', orb: 'orb-wind', keywords: ['风', '焦虑', '烦躁', '紧张', '压力', '急', '躁'] },
-            still: { name: '无风', icon: '🌑', bg: 'weather-bg-still', orb: 'orb-still', keywords: ['无风', '静止', '空虚', '麻木', '疲惫', '累', '麻'] },
-            dusk: { name: '黄昏', icon: '🌅', bg: 'weather-bg-dusk', orb: 'orb-dusk', keywords: ['黄昏', '傍晚', '怀旧', '感慨', '时光', '曾经', '过去'] },
-            night: { name: '深夜', icon: '🌙', bg: 'weather-bg-night', orb: 'orb-night', keywords: ['深夜', '夜', '黑夜', '孤独', '寂寞', '沉思', '一个人'] },
-            thunder: { name: '雷雨', icon: '⚡', bg: 'weather-bg-thunder', orb: 'orb-thunder', keywords: ['雷雨', '雷', '愤怒', '爆发', '生气', '怒', '烦死了'] },
-            snow: { name: '雪', icon: '❄️', bg: 'weather-bg-snow', orb: 'orb-snow', keywords: ['雪', '下雪', '宁静', '纯净', '平和', '安静', '禅'] }
+            clear: { 
+                name: '晴朗', 
+                bg: 'weather-bg-clear', 
+                orb: 'orb-clear',
+                isLight: true,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#FFD700"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#FFD700" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`,
+                keywords: ['晴朗', '晴天', '开心', '快乐', '幸福', '满足', '愉悦', 'positive'] 
+            },
+            lightCloud: { 
+                name: '多云', 
+                bg: 'weather-bg-lightCloud', 
+                orb: 'orb-lightCloud',
+                isLight: true,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#FFD700" opacity="0.5"/><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#C0C0C0"/></svg>`,
+                keywords: ['多云', '轻微忧虑', '不确定', '犹豫'] 
+            },
+            overcast: { 
+                name: '阴天', 
+                bg: 'weather-bg-overcast', 
+                orb: 'orb-overcast',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#808080"/></svg>`,
+                keywords: ['阴天', '郁闷', '低落', '无精打采', '压抑', '沮丧'] 
+            },
+            fog: { 
+                name: '雾', 
+                bg: 'weather-bg-fog', 
+                orb: 'orb-fog',
+                isLight: true,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M4 15h16M4 18h16M4 12h16M6 9h12" stroke="#C0C0C0" stroke-width="2" stroke-linecap="round"/></svg>`,
+                keywords: ['雾', '迷茫', '困惑', '看不清', '迷失'] 
+            },
+            rain: { 
+                name: '小雨', 
+                bg: 'weather-bg-rain', 
+                orb: 'orb-rain',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#708090"/><path d="M8 22v-2m4 2v-2m4 2v-2" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/></svg>`,
+                keywords: ['小雨', '雨', '伤感', '思念', '温柔', '怀旧', '想'] 
+            },
+            heavyRain: { 
+                name: '大雨', 
+                bg: 'weather-bg-heavyRain', 
+                orb: 'orb-heavyRain',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#2C3E50"/><path d="M8 23v-3m4 3v-3m4 3v-3" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/><path d="M10 18l-2 3m6-3l-2 3" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/></svg>`,
+                keywords: ['大雨', '暴雨', '悲伤', '痛苦', '失落', '难过', '哭'] 
+            },
+            wind: { 
+                name: '风', 
+                bg: 'weather-bg-wind', 
+                orb: 'orb-wind',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M4 10h3m10 0h3M4 14h7m3 0h3M4 18h3m10 0h3" stroke="#E0E0E0" stroke-width="2" stroke-linecap="round"/></svg>`,
+                keywords: ['风', '焦虑', '烦躁', '紧张', '压力', '急', '躁'] 
+            },
+            still: { 
+                name: '无风', 
+                bg: 'weather-bg-still', 
+                orb: 'orb-still',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#34495E" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#34495E"/></svg>`,
+                keywords: ['无风', '静止', '空虚', '麻木', '疲惫', '累', '麻'] 
+            },
+            dusk: { 
+                name: '黄昏', 
+                bg: 'weather-bg-dusk', 
+                orb: 'orb-dusk',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M12 2v6m0 6v8" stroke="#FF6B6B" stroke-width="2"/><path d="M4 18h16" stroke="#E74C3C" stroke-width="3" stroke-linecap="round"/><path d="M6 14l-2 2m16-2l2 2M2 10l2-2m20 2l-2-2" stroke="#FF6B6B" stroke-width="2"/></svg>`,
+                keywords: ['黄昏', '傍晚', '怀旧', '感慨', '时光', '曾经', '过去'] 
+            },
+            night: { 
+                name: '深夜', 
+                bg: 'weather-bg-night', 
+                orb: 'orb-night',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#E0E0E0"/><circle cx="8" cy="8" r="1" fill="white"/><circle cx="16" cy="6" r="1" fill="white"/></svg>`,
+                keywords: ['深夜', '夜', '黑夜', '孤独', '寂寞', '沉思', '一个人'] 
+            },
+            thunder: { 
+                name: '雷雨', 
+                bg: 'weather-bg-thunder', 
+                orb: 'orb-thunder',
+                isLight: false,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#2C3E50"/><path d="M13 16l-4 6h4l-2 6" stroke="#FFD700" stroke-width="2" fill="none"/></svg>`,
+                keywords: ['雷雨', '雷', '愤怒', '爆发', '生气', '怒', '烦死了'] 
+            },
+            snow: { 
+                name: '雪', 
+                bg: 'weather-bg-snow', 
+                orb: 'orb-snow',
+                isLight: true,
+                iconSvg: `<svg width="60" height="60" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14" stroke="#ECF0F1" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="#ECF0F1"/></svg>`,
+                keywords: ['雪', '下雪', '宁静', '纯净', '平和', '安静', '禅'] 
+            }
         };
 
         let currentWeather = 'clear';
@@ -618,7 +731,6 @@
             } catch (error) {
                 console.error('Gemini API 错误:', error);
                 showToast('AI 分析失败，使用本地分析...');
-                // 失败时回退到本地分析
                 await simulateLocalAnalysis(input);
             } finally {
                 btn.innerHTML = originalContent;
@@ -633,7 +745,6 @@
             const lower = input.toLowerCase();
             let weather = 'lightCloud';
             
-            // 关键词匹配
             for (const [key, config] of Object.entries(weatherConfig)) {
                 if (config.keywords.some(k => lower.includes(k))) {
                     weather = key;
@@ -646,13 +757,10 @@
 
         // 根据天气名称应用天气
         function applyWeatherByName(weatherName, moodText) {
-            // 提取天气名称（去除可能的引号、标点等）
             const cleanName = weatherName.replace(/["'，。！？.!?]/g, '').trim();
             
-            // 查找匹配的天气
             let matchedWeather = null;
             
-            // 首先精确匹配
             for (const [key, config] of Object.entries(weatherConfig)) {
                 if (config.name === cleanName || config.keywords.includes(cleanName)) {
                     matchedWeather = key;
@@ -660,7 +768,6 @@
                 }
             }
             
-            // 如果没找到，尝试模糊匹配
             if (!matchedWeather) {
                 const nameMap = {
                     '晴朗': 'clear', '晴天': 'clear', '阳光': 'clear',
@@ -691,11 +798,21 @@
             }
             
             currentWeather = weather;
-            
-            // 更新背景
             const app = document.getElementById('app');
-            Object.values(weatherConfig).forEach(w => app.classList.remove(w.bg));
+            
+            // 移除所有背景和主题类
+            Object.values(weatherConfig).forEach(w => {
+                app.classList.remove(w.bg);
+            });
+            app.classList.remove('light-theme');
+            
+            // 添加新背景
             app.classList.add(config.bg);
+            
+            // 根据背景亮度添加主题类
+            if (config.isLight) {
+                app.classList.add('light-theme');
+            }
             
             // 更新小球
             const orb = document.getElementById('orb');
@@ -703,8 +820,8 @@
             Object.values(weatherConfig).forEach(w => orb.classList.remove(w.orb));
             orb.classList.add(config.orb);
             
-            // 更新图标和文字
-            document.getElementById('weather-icon').textContent = config.icon;
+            // 更新 SVG 图标
+            document.getElementById('weather-icon').innerHTML = config.iconSvg;
             document.getElementById('weather-text').textContent = `内心天气：${config.name}`;
             document.getElementById('mood-text').textContent = moodText ? `「${moodText}」` : '';
             
@@ -725,10 +842,7 @@
             };
             orbGlow.style.background = glowColors[weather] || glowColors.clear;
             
-            // 更新特效
             updateWeatherEffects(weather);
-            
-            // 关闭弹窗并提示
             closeModal();
             showToast(`已切换至${config.name}天气`);
         }
@@ -750,15 +864,12 @@
             const canvas = document.getElementById('weather-effects');
             const ctx = canvas.getContext('2d');
             
-            // 清除之前的动画
             if (weatherEffectId) {
                 cancelAnimationFrame(weatherEffectId);
             }
             
-            // 清空画布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 根据天气启动特效
             switch(weather) {
                 case 'rain':
                 case 'heavyRain':
@@ -899,7 +1010,6 @@
             function animate(timestamp) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // 随机闪电
                 if (timestamp - lastFlash > 3000 + Math.random() * 4000) {
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
